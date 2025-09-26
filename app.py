@@ -1,3 +1,40 @@
+from flask import Flask
+import random
+app = Flask(__name__)
+
+@app.route('/')
+def hello():
+    return 'Hello'
+
+@app.route('/name/<user_name>')
+def name(user_name):
+    return 'Hello,'+str(user_name)
+
+@app.route('/calcurate/<int:a>/<int:b>')
+def calcurate(a,b):
+    return str(a**b)
+
+@app.route('/day/<int:num>')
+def day(num):
+    day_list = ['Mon','Tue','Wed','Thu','Fri','Stu','Sun']
+    return 'Today is ' + day_list[num-1]
+
+@app.route('/omikuji')
+def omikuji():
+    rnd = random.randint(1,10)
+    if rnd == 1:
+        return '大吉!!!!'
+    elif 2<=rnd<=4:
+        return '中吉!!'
+    elif 5<=rnd<=8:
+        return '小吉'
+    else:
+        return '凶'
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
+"""
 from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 
@@ -50,4 +87,4 @@ if __name__ == "__main__":
     with app.app_context():
         db.create_all()
     app.run(debug=True)
-
+"""
