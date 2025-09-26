@@ -12,14 +12,20 @@ def name():
     name = request.form['username']
     return f'your name is {name}'
 
-@app.route('/result',methods=['POST'])
-def result():
-    value1 = int(request.form['value1'])
-    value2 = int(request.form['value2'])
-    output1 = f'{value1}+{value2}={value1+value2}'
-    output2 = f'{value1}*{value2}={value1*value2}'
-    return output1 +"<br>"+ output2
-
+@app.route('/calculate',methods=['POST'])
+def calc():
+    num1 = float(request.form['num1'])
+    num2 = float(request.form['num2'])
+    ope = request.form['operator']
+    if ope == 'sum':
+        return f'{num1}+{num2}={num1+num2}'
+    elif ope == 'dif':
+        return f'{num1}-{num2}={num1-num2}'
+    elif ope == 'pro':
+        return f'{num1}*{num2}={num1*num2}'
+    elif ope == 'quo':
+        return f'{num1}/{num2}={num1/num2}'
+        
 @app.route('/omikuji', methods=['POST'])
 def omikuji():
     num = randint(1,10)

@@ -12,9 +12,17 @@
         <input type="submit" value="submit">
     </form>
     <h1>Calculate</h1>
-    <form action="/result" method="post">
-        <input type="text" name="value1">
-        <input type="text" name="value2">
+    <form action="/calculate" method="post">
+        <input type="text" name="num1">
+        <input type="text" name="num2">
+        <input type="radio" name="operator" id="sum" value="sum">
+        <label for="sum">Summation</label>
+        <input type="radio" name="operator" id="dif" value="dif">
+        <label for="dif">Difference</label>
+        <input type="radio" name="operator" id="pro" value="pro">
+        <label for="pro">Product</label>
+        <input type="radio" name="operator" id="quo" value="quo">
+        <label for="quo">Quotient</label>
         <input type="submit" value="submit">
     </form>
     <h1>Omikuji</h1>
