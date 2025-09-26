@@ -8,10 +8,10 @@ def hello():
 
 @app.route('/name/<user_name>')
 def name(user_name):
-    return 'Hello,'+str(user_name)
+    return f'Hello,{user_name}'
 
-@app.route('/calcurate/<int:a>/<int:b>')
-def calcurate(a,b):
+@app.route('/calculate/<int:a>/<int:b>')
+def calculate(a,b):
     return str(a**b)
 
 @app.route('/day/<int:num>')
