@@ -37,7 +37,7 @@ def omikuji():
         result = '小吉'
     else:
         result = '凶'
-    return render_template('result3.html',result = result)
+    return render_template('omikuji.html',result = result)
 
 @app.route('/check',methods=['POST'])
 def check():
