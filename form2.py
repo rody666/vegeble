@@ -13,5 +13,5 @@ def result():
     output1 = f'{value1}+{value2}={value1+value2}'
     output2 = f'{value1}*{value2}={value1*value2}'
     return output1 +"<br>"+ output2
-
-app.run(debug=True)
+if __name__ == '__main__':
+    app.run(debug=True)
