@@ -9,23 +9,25 @@ def index():
 
 @app.route('/name', methods=['POST'])
 def name():
-    name = request.form['username']
+    name = request.form.get('username','guest')
     return f'your name is {name}'
 
 @app.route('/calculate',methods=['POST'])
 def calc():
-    num1 = float(request.form['num1'])
-    num2 = float(request.form['num2'])
-    ope = request.form['operator']
-    if ope == 'sum':
-        return f'{num1}+{num2}={num1+num2}'
-    elif ope == 'dif':
-        return f'{num1}-{num2}={num1-num2}'
-    elif ope == 'pro':
-        return f'{num1}*{num2}={num1*num2}'
-    elif ope == 'quo':
-        return f'{num1}/{num2}={num1/num2}'
-        
+    operations = {
+        'sum':(lambda a,b: f'{a}+{b}={a+b}'),
+        'dif':(lambda a,b: f'{a}-{b}={a-b}'),
+        'pro':(lambda a,b: f'{a}*{b}={a*b}'),
+        'quo':(lambda a,b: f'{a}/{b}={a/b}' if b != 0 else 'Error: Division by zero')
+    }
+    ope = request.form.get('operator','sum')
+    try:
+        num1,num2 = float(request.form['num1']),float(request.form['num2'])
+    except ValueError:
+        return '400: Bad Request<br>Enter number',400
+    else:
+        return operations[ope](num1,num2)
+
 @app.route('/omikuji', methods=['POST'])
 def omikuji():
     num = randint(1,10)
@@ -41,11 +43,11 @@ def omikuji():
 
 @app.route('/check',methods=['POST'])
 def check():
-    num = int(request.form['num'])
-    if num % 2 == 0:
-        return f'{num} is Even number'
+    try:
+        num = int(request.form['num'])
+    except ValueError:
+        return '400: Bad Request<br>Enter number',400
     else:
-        return f'{num} is Odd number'
-
+        return 'Even' if num%2 == 0 else 'Odd'
 if __name__ == '__main__':
     app.run(debug=True)
