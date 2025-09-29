@@ -15,6 +15,10 @@
     <ul>
     {% for memo in memos %}
         <li>{{ loop.index }}.{{ memo.title }}: {{ memo.text }}</li>
+        <form action="/delete" method="post">
+            <input type="hidden" name="id" value="{{ memo.id }}">
+            <input type="submit" value="delete">
+        </form>
     {% else %}
         <li>No memo</li>
     {% endfor %}
