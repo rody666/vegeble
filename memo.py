@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, redirect, url_for
 
 app = Flask(__name__)
 memos = []
@@ -16,8 +16,7 @@ def add():
     tmp = {'id':id,'title':title,'text':text}
     memos.append(tmp)
     id += 1
-    print(memos)
-    return render_template('memo.html',memos=memos)
+    return redirect(url_for('index'))
 
 @app.route('/delete', methods=['post'])
 def delete():
@@ -26,7 +25,7 @@ def delete():
         if str(memos[i]['id']) == delete_id:
             memos.pop(i)
             break
-    return render_template('memo.html',memos=memos)
+    return redirect(url_for('index'))
 
 
 if __name__ == '__main__':
