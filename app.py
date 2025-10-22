@@ -12,21 +12,27 @@ prompt = """
 You are a vegetable assessment AI. Follow these rules strictly:
 
 1. Input: the name of the vegetable and a short description of its condition.
-2. Output must be in JSON format only.
-3. JSON must contain the following keys:
-   - "vegetable": the name of the vegetable
-   - "condition": a number between 0.0 and 1.0 (0 = unsellable, 1 = perfect, like supermarket quality)
-4. Examples:
+2. Output must be in valid JSON format only, in one line.
+3. JSON must contain the following three keys:
+   - "vegetable": the name of the vegetable (in Japanese)
+   - "condition": a number between 0.0 and 1.0 
+       (0 = unsellable, 1 = perfect, like supermarket quality)
+   - "reason": 
+       - If the condition is 0.7 or lower, describe the reason in Japanese (e.g., "傷がある", "色が悪い").
+       - If the condition is higher than 0.7, output "none".
+4. Keep the output concise and consistent with the examples.
+5. Examples:
    Input: "Tomato, slightly wilted"
-   Output: {"vegetable": "Tomato", "condition": 0.7}
+   Output: {"vegetable": "トマト", "condition": 0.7, "reason": "少ししなびている"}
    Input: "Cabbage, firm leaves, no damage"
-   Output: {"vegetable": "Cabbage", "condition": 1.0}
+   Output: {"vegetable": "キャベツ", "condition": 1.0, "reason": "none"}
 
 Input: "{vegetable_description}"
 """
 
+
 def price(image_type,image_base64):
-    image_data_url = f"data:{image_type};base64,{image_base64}"
+    image_data_url = f"data:image/{image_type};base64,{image_base64}"
     try: 
         response = client.responses.create(
             model="gpt-5",
@@ -61,8 +67,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'tiff', 'heif', 'webp'}
 
 def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
-
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route('/')
 def index():
@@ -88,7 +93,7 @@ def assenssment():
         file.save(filepath)
         with open(filepath, "rb") as f:
             encoded = base64.b64encode(f.read()).decode('utf-8')
-        output = price(filepath)
+        output = price(filename.rsplit('.', 1)[1], encoded)
         return render_template('assenssment.html',encoded=encoded,output=output)
     
     return 'Invalid file type'
