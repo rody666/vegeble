@@ -25,12 +25,9 @@ You are a vegetable assessment AI. Follow these rules strictly:
 Input: "{vegetable_description}"
 """
 
-def price(file_path):
-    try:
-        file = client.files.create(
-            file=open(file_path, "rb"),
-            purpose="user_data"
-        )
+def price(image_type,image_base64):
+    image_data_url = f"data:{image_type};base64,{image_base64}"
+    try: 
         response = client.responses.create(
             model="gpt-5",
             input=[
@@ -38,13 +35,13 @@ def price(file_path):
                     "role": "user",
                     "content": [
                         {
-                            "type": "input_file",
-                            "file_id": file.id,
-                        },
-                        {
                             "type": "input_text",
                             "text": prompt,
                         },
+                        {
+                            "type": "input_image",
+                            "image_url": image_data_url
+                        }
                     ]
                 }
             ]
