@@ -4,9 +4,17 @@ from openai import OpenAI
 import os
 import base64
 from api_key import apikey
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime, date
 
 app = Flask(__name__)
+app.secret_key = 'test'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://main.db'
+#app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://prices.db'
+#app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://users.db'
+#app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://messages.db'
 client = OpenAI(api_key=apikey.key)
+db = SQLAlchemy(app)
 
 prompt = """
 You are a vegetable assessment AI. Follow these rules strictly:
@@ -29,7 +37,50 @@ You are a vegetable assessment AI. Follow these rules strictly:
 
 Input: "{vegetable_description}"
 """
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100))
+    phone = db.Column(db.String(20))
+    password_hash = db.Column(db.String(200))
+    user_type = db.Column(db.String(20))  # 'farmer' or 'employee'
+    created_at = db.Column(db.DateTime, default=datetime)
 
+class Vegetable(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100))
+    base_price = db.Column(db.Float)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Assessment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    vegetable_id = db.Column(db.Integer, db.ForeignKey('vegetable.id'))
+    image_path = db.Column(db.String(200))
+    condition = db.Column(db.String(100))
+    weight = db.Column(db.Float)
+    price_per_kg = db.Column(db.Float)
+    total_price = db.Column(db.Float)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Message(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    receiver_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    content = db.Column(db.Text)
+    sent_at = db.Column(db.DateTime, default=datetime.utcnow)
+    is_read = db.Column(db.Boolean, default=False)
+
+class Transaction(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    assessment_id = db.Column(db.Integer, db.ForeignKey('assessment.id'))
+    agreed_price = db.Column(db.Float)
+    pickup_date = db.Column(db.DateTime)
+    status = db.Column(db.String(20), default='pending')
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+with app.app_context():
+    db.create_all()
 
 def price(image_type,image_base64):
     image_data_url = f"data:image/{image_type};base64,{image_base64}"
@@ -71,11 +122,11 @@ def allowed_file(filename):
 
 @app.route('/')
 def index():
-    return render_template('assenssment.html')
+    return render_template('assessment.html')
 
 
-@app.route('/assenssment', methods=['POST'])
-def assenssment():
+@app.route('/assessment', methods=['POST'])
+def assessment():
     #if 'file' not in request.files:
     #    return 'No file part'
     
@@ -94,7 +145,7 @@ def assenssment():
         with open(filepath, "rb") as f:
             encoded = base64.b64encode(f.read()).decode('utf-8')
         output = price(filename.rsplit('.', 1)[1], encoded)
-        return render_template('assenssment.html',encoded=encoded,output=output)
+        return render_template('assessment.html',encoded=encoded,output=output)
     
     return 'Invalid file type'
 
