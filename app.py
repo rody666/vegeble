@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, redirect, url_for
+from flask import Flask, request, render_template, redirect, url_for, session
 from werkzeug.utils import secure_filename
 from openai import OpenAI
 import os
@@ -9,7 +9,8 @@ from datetime import datetime, date
 
 app = Flask(__name__)
 app.secret_key = 'test'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://main.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///main.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 #app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://prices.db'
 #app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://users.db'
 #app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://messages.db'
@@ -37,19 +38,20 @@ You are a vegetable assessment AI. Follow these rules strictly:
 
 Input: "{vegetable_description}"
 """
+
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
     phone = db.Column(db.String(20))
     password_hash = db.Column(db.String(200))
     user_type = db.Column(db.String(20))  # 'farmer' or 'employee'
-    created_at = db.Column(db.DateTime, default=datetime)
+    created_at = db.Column(db.DateTime, default=datetime.now())
 
 class Vegetable(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
     base_price = db.Column(db.Float)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.now())
 
 class Assessment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -60,14 +62,14 @@ class Assessment(db.Model):
     weight = db.Column(db.Float)
     price_per_kg = db.Column(db.Float)
     total_price = db.Column(db.Float)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now())
 
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     sender_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     receiver_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     content = db.Column(db.Text)
-    sent_at = db.Column(db.DateTime, default=datetime.utcnow)
+    sent_at = db.Column(db.DateTime, default=datetime.now())
     is_read = db.Column(db.Boolean, default=False)
 
 class Transaction(db.Model):
@@ -76,8 +78,7 @@ class Transaction(db.Model):
     agreed_price = db.Column(db.Float)
     pickup_date = db.Column(db.DateTime)
     status = db.Column(db.String(20), default='pending')
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow)
-
+    updated_at = db.Column(db.DateTime, default=datetime.now())
 
 with app.app_context():
     db.create_all()
@@ -122,7 +123,36 @@ def allowed_file(filename):
 
 @app.route('/')
 def index():
-    return render_template('assessment.html')
+    if 'user_id' in session:
+        return render_template('assessment.html')
+    return redirect(url_for('login'))
+
+@app.route('/login',methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        phone = request.form['phone']
+        password = request.form['password']
+        user = User.query.filter_by(phone=phone,password_hash=password).first()
+        if user:
+            session['user_id'] = user.id
+            return redirect(url_for('index'))
+        else:
+            return 'ログイン失敗'
+    return render_template('login.html')
+
+@app.route('/register', methods=['GET','POST'])
+def register():
+    if request.method == 'POST':
+        name = request.form['name']
+        phone = request.form['phone']
+        password = request.form['password']
+        if User.query.filter_by(phone=phone).first():
+            return 'この電話番号はすでに登録されています。'
+        user = User(name=name, phone=phone, password_hash=password)
+        db.session.add(user)
+        db.session.commit()
+        return redirect(url_for('login.html'))
+    return render_template('register.html')
 
 
 @app.route('/assessment', methods=['POST'])
@@ -149,6 +179,24 @@ def assessment():
     
     return 'Invalid file type'
 
+@app.route('/mypage', methods=['GET','POST'])
+def mypage():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    user = User.query.get(session['user_id'])
+    return render_template(
+        'mypage.html',
+        name=user.name, 
+        phone=user.phone, 
+        password=user.password_hash, 
+        date=user.created_at
+        )
+
+@app.route('/logout')
+def logtou():
+    session.clear()
+    return redirect(url_for('login'))
+
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=5000)
