@@ -92,14 +92,8 @@ def price(image_type,image_base64):
                 {
                     "role": "user",
                     "content": [
-                        {
-                            "type": "input_text",
-                            "text": prompt,
-                        },
-                        {
-                            "type": "input_image",
-                            "image_url": image_data_url
-                        }
+                        {"type": "input_text","text": prompt,},
+                        {"type": "input_image","image_url": image_data_url}
                     ]
                 }
             ]
@@ -197,6 +191,10 @@ def logtou():
     session.clear()
     return redirect(url_for('login'))
 
+@app.route('/users')
+def users():
+    users = User.query.all()
+    return render_template('users.html', users=users)
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
