@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, redirect, url_for, session
+from flask import Flask, request, render_template, redirect, url_for, session, jsonify
 from werkzeug.utils import secure_filename
 from openai import OpenAI
 import os
@@ -6,6 +6,8 @@ import base64
 from api_key import apikey
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, date
+import uuid
+import json
 
 app = Flask(__name__)
 app.secret_key = 'test'
@@ -45,13 +47,13 @@ class User(db.Model):
     phone = db.Column(db.String(20))
     password_hash = db.Column(db.String(200))
     user_type = db.Column(db.String(20))  # 'farmer' or 'employee'
-    created_at = db.Column(db.DateTime, default=datetime.now())
+    created_at = db.Column(db.DateTime, default=datetime.now)
 
 class Vegetable(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
     base_price = db.Column(db.Float)
-    updated_at = db.Column(db.DateTime, default=datetime.now())
+    updated_at = db.Column(db.DateTime, default=datetime.now)
 
 class Assessment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -62,14 +64,14 @@ class Assessment(db.Model):
     weight = db.Column(db.Float)
     price_per_kg = db.Column(db.Float)
     total_price = db.Column(db.Float)
-    created_at = db.Column(db.DateTime, default=datetime.now())
+    created_at = db.Column(db.DateTime, default=datetime.now)
 
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     sender_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     receiver_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     content = db.Column(db.Text)
-    sent_at = db.Column(db.DateTime, default=datetime.now())
+    sent_at = db.Column(db.DateTime, default=datetime.now)
     is_read = db.Column(db.Boolean, default=False)
 
 class Transaction(db.Model):
@@ -78,7 +80,13 @@ class Transaction(db.Model):
     agreed_price = db.Column(db.Float)
     pickup_date = db.Column(db.DateTime)
     status = db.Column(db.String(20), default='pending')
-    updated_at = db.Column(db.DateTime, default=datetime.now())
+    updated_at = db.Column(db.DateTime, default=datetime.now)
+
+class Image(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    image_name = db.Column(db.String(100))
+    upload_at = db.Column(db.DateTime, default=datetime.now)
 
 with app.app_context():
     db.create_all()
@@ -145,12 +153,39 @@ def register():
         user = User(name=name, phone=phone, password_hash=password)
         db.session.add(user)
         db.session.commit()
-        return redirect(url_for('login.html'))
+        return redirect(url_for('login'))
     return render_template('register.html')
 
+@app.route('/upload',methods=['POST'])
+def upload():
+    file = request.files['vege_image']
+    if file and allowed_file(file.filename):
+        ext = file.filename.rsplit('.', 1)[1].lower()
+        uniqID = uuid.uuid4().hex
+        image = Image(user_id = session['user_id'], image_name = f'{uniqID}.{ext}')
+        db.session.add(image)
+        db.session.commit()
+        filepath = os.path.join(
+            app.config['UPLOAD_FOLDER'],
+            f'{uniqID}.{ext}'
+        )
+        file.save(filepath)
+        return jsonify({"status":"ok", "filename": f'{uniqID}.{ext}'})
+    return ''
 
-@app.route('/assessment', methods=['POST'])
-def assessment():
+@app.route('/assessment/<string:filename>', methods=['GET','POST'])
+def assessment(filename):
+    image = Image.query.filter_by(image_name=filename).first()
+    if image:
+        path = os.path.join(app.config['UPLOAD_FOLDER'],filename)
+        with open(path, "rb") as f:
+            encoded = base64.b64encode(f.read()).decode('utf-8')
+        output = price(filename.rsplit('.', 1)[1], encoded)
+        return jsonify(json.loads(output))
+    else: 
+        return (f'{filename} is Not exist')
+
+'''''
     #if 'file' not in request.files:
     #    return 'No file part'
     
@@ -172,6 +207,7 @@ def assessment():
         return render_template('assessment.html',encoded=encoded,output=output)
     
     return 'Invalid file type'
+'''''
 
 @app.route('/mypage', methods=['GET','POST'])
 def mypage():
@@ -191,10 +227,20 @@ def logtou():
     session.clear()
     return redirect(url_for('login'))
 
+
+
 @app.route('/users')
 def users():
     users = User.query.all()
     return render_template('users.html', users=users)
+
+@app.route('/uploads')
+def uploads():
+    uploads = Image.query.all()
+    return render_template('uploads.html', uploads=uploads)
+
+
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

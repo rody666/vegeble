@@ -6,15 +6,45 @@
     <title>買取査定</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/assenssment.css') }}">
     <script>
-        const onChangeInputFile = (e) => {
-            if (e.target.files && e.target.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    document.getElementById('thumbnail').setAttribute('src', e.target.result);
-                };
-                reader.readAsDataURL(e.target.files[0]);
-            }
-        };
+        // Wait until DOM is ready before querying elements.
+        document.addEventListener('DOMContentLoaded', () => {
+            const condition_p = document.getElementById('condition');
+            const vegetable_p = document.getElementById('vegetable');
+            const reason_p = document.getElementById('reason');
+
+            const onChangeInputFile = async (e) => {
+                const file = e.target.files[0];
+                if (e.target.files && file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        document.getElementById('thumbnail').setAttribute('src', e.target.result);
+                    };
+                    reader.readAsDataURL(file);
+
+                    const formData = new FormData();
+                    formData.append('vege_image', file);
+                    try {
+                        const response1 = await fetch('/upload', {
+                            method: 'POST',
+                            body: formData,
+                        });
+                        const result1 = await response1.json();
+                        const response2 = await fetch(`/assessment/${result1.filename}`, {
+                            method: 'POST'
+                        });
+                        const result2 = await response2.json();
+                        vegetable_p.textContent = `種類: ${result2.vegetable}`;
+                        condition_p.textContent = `状態: ${result2.condition}`;
+                        reason_p.textContent = `理由: ${result2.reason}`;
+                    } catch (error) {
+                        console.log('アップロードに失敗しました。', error);
+                    }
+                }
+            };
+
+            // expose handler to global so inline onchange="onChangeInputFile(event)" works
+            window.onChangeInputFile = onChangeInputFile;
+        });
     </script>
 </head>
 <body>
@@ -24,10 +54,9 @@
     <div>
         <img id="thumbnail" accept="image/*" src="{{ url_for('static', filename='img/add_pic.png') }}">
     </div>
-    <div>
-        <img src="data:image/png;base64,{{encoded}}" width="100px" alt="vegeimage">
-        <h3>{{output}}</h3>
-    </div>
+    <p id="vegetable"></p>
+    <p id="condition"></p>
+    <p id="reason"></p>
     <form action="/assessment" method="post" enctype="multipart/form-data">
         <input type="file" name="vege_image" accept="image/*" onchange="onChangeInputFile(event)">
         <input type="submit" value="査定する">
