@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>価格設定</title>
+</head>
+<body>
+    <table border="1">
+        <tr>
+            <th>id</th>
+            <th>名前</th>
+            <th>現在価格</th>
+            <th>更新日時</th>
+        </tr>    
+        {% for vegetable in vegetables %}
+        <tr>
+            <td>{{vegetable.id}}</td>
+            <td>{{vegetable.name}}</td>
+            <td>{{vegetable.base_price}}</td>
+            <td>{{vegetable.updated_at}}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    <form action="/setprice">
+        <input type="text" name="">
+    </form>
+</body>
+</html>

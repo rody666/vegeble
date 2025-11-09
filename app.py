@@ -185,29 +185,6 @@ def assessment(filename):
     else: 
         return (f'{filename} is Not exist')
 
-'''''
-    #if 'file' not in request.files:
-    #    return 'No file part'
-    
-    file = request.files['vege_image']
-    
-    if file.filename == '':
-        return 'No selected file'
-    
-    if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(
-            app.config['UPLOAD_FOLDER'],
-            filename
-        )
-        file.save(filepath)
-        with open(filepath, "rb") as f:
-            encoded = base64.b64encode(f.read()).decode('utf-8')
-        output = price(filename.rsplit('.', 1)[1], encoded)
-        return render_template('assessment.html',encoded=encoded,output=output)
-    
-    return 'Invalid file type'
-'''''
 
 @app.route('/mypage', methods=['GET','POST'])
 def mypage():
@@ -227,7 +204,10 @@ def logtou():
     session.clear()
     return redirect(url_for('login'))
 
-
+@app.route('/setprice')
+def setprice():
+    vegetables = Vegetable.query.all()
+    return render_template('setprice.html',vegetables=vegetables)
 
 @app.route('/users')
 def users():
