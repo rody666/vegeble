@@ -204,8 +204,24 @@ def logtou():
     session.clear()
     return redirect(url_for('login'))
 
-@app.route('/setprice')
+@app.route('/setprice', methods=['GET','POST'])
 def setprice():
+    if request.method == 'POST':
+        newvege = request.form['newvege']
+        newvege_price = request.form['newvege_price']
+        newvege_weight = request.form['newvege_weight']
+        print(newvege,newvege_price,newvege_weight)
+        try:
+            newvege_price,newvege_weight = int(newvege_price),int(newvege_weight)
+        except ValueError:
+            return '数字を入力して！'
+        if not Vegetable.query.filter_by(name=newvege).first():
+            price_per_gram = newvege_price / newvege_weight
+            vegetable = Vegetable(name=newvege,base_price=price_per_gram)
+            db.session.add(vegetable)
+            db.session.commit()
+        else:
+            return '登録済み！'
     vegetables = Vegetable.query.all()
     return render_template('setprice.html',vegetables=vegetables)
 
