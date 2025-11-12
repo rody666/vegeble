@@ -6,42 +6,43 @@
     <title>価格設定</title>
 </head>
 <body>
-    <table border="1">
-        <tr>
-            <th>id</th>
-            <th>名前</th>
-            <th>現在価格(kgあたり)</th>
-            <th>更新価格</th>
-            <th>更新日時</th>
-            <th>削除</th>
-        </tr>
-        <form action="/change_price" method="post">
-        {% for vegetable in vegetables %}
-        <tr>
-            <td>{{vegetable.id}}</td>
-            <td>{{vegetable.name}}</td>
-            <td>{{vegetable.base_price}}円</td>
-            <td>
-                <input type="number" name="id{{vegetable.id}}">
-                円/
-                <input type="number" name="id{{vegetable.id}}weight">
-                kgあたり
-            </td>
-            <td>{{vegetable.updated_at}}</td>
-            <td>
-            </td>
-        </tr>
-        {% endfor %}
-            <input type="submit" value="送信">
-        </form>
-    </table>
+    <form action="/update_price" method="post">
+        <table border="1">
+            <tr>
+                <th>id</th>
+                <th>名前</th>
+                <th>現在価格(kgあたり)</th>
+                <th>更新価格</th>
+                <th>更新日時</th>
+                <th>削除</th>
+            </tr>
+            {% for vegetable in vegetables %}
+            <tr>
+                <td>{{ vegetable.id }}</td>
+                <td>{{ vegetable.name }}</td>
+                <td>{{ vegetable.base_price }}円</td>
+                <td>
+                    <input type="number" name="price_{{ vegetable.id }}" step="0.1"> 円/
+                    <input type="number" name="weight_{{ vegetable.id }}" step="0.1"> kgあたり
+                </td>
+                <td>{{ vegetable.updated_at }}</td>
+                <td>
+                    <button type="submit" name="delete_id" value="{{ vegetable.id }}">削除</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+        <input type="submit" value="更新">
+    </form>
+
+    <hr>
+
     <form action="/setprice" method="post">
-        <input type="text" name="newvege">
-        <input type="number" name="newvege_price">
-        円/
-        <input type="number" name="newvege_weight">
-        kgあたり
-        <input type="submit" value="送信">
+        <input type="text" name="newvege" placeholder="新しい野菜名">
+        <input type="number" name="newvege_price" step="0.1"> 円/
+        <input type="number" name="newvege_weight" step="0.1"> kgあたり
+        <input type="submit" value="追加">
     </form>
 </body>
+
 </html>

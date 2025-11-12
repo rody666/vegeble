@@ -25,7 +25,7 @@ You are a vegetable assessment AI. Follow these rules strictly:
 1. Input: the name of the vegetable and a short description of its condition.
 2. Output must be in valid JSON format only, in one line.
 3. JSON must contain the following three keys:
-   - "vegetable": the name of the vegetable (in Japanese)
+   - "vegetable": the name of the vegetable (in Japanese Hiragana or Katakana)
    - "condition": a number between 0.0 and 1.0 
        (0 = unsellable, 1 = perfect, like supermarket quality)
    - "reason": 
@@ -210,9 +210,10 @@ def setprice():
         newvege = request.form['newvege']
         newvege_price = request.form['newvege_price']
         newvege_weight = request.form['newvege_weight']
-        print(newvege,newvege_price,newvege_weight)
+        if newvege_weight == '':
+            newvege_weight = 1
         try:
-            newvege_price,newvege_weight = int(newvege_price),int(newvege_weight)
+            newvege_price,newvege_weight = float(newvege_price),float(newvege_weight)
         except ValueError:
             return '数字を入力して！'
         if not Vegetable.query.filter_by(name=newvege).first():
@@ -224,6 +225,33 @@ def setprice():
             return '登録済み！'
     vegetables = Vegetable.query.all()
     return render_template('setprice.html',vegetables=vegetables)
+
+@app.route('/update_price', methods=['POST'])
+def update_price():
+    delete_id = request.form.get('delete_id')
+    if delete_id is not None:
+        vegetable = Vegetable.query.get(delete_id)
+        db.session.delete(vegetable)
+        db.session.commit()
+    for key,value in request.form.items():
+        if key.startswith('price_') and value != '':
+            vege_id = key.split('_')[1]
+            price = value
+            weight = request.form[f'weight_{vege_id}']
+            if weight == '':
+                weight = 1
+            try:
+                price,weight = float(price),float(weight)
+            except ValueError:
+                return '数値を入力して！'
+            price_per_gram = price / weight
+            vegetable = Vegetable.query.get(vege_id)
+            vegetable.base_price = price_per_gram
+            vegetable.update_at = datetime.now()
+            db.session.merge(vegetable)
+            db.session.commit()
+
+    return redirect(url_for('setprice'))
 
 @app.route('/users')
 def users():
