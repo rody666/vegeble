@@ -8,6 +8,7 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, date
 import uuid
 import json
+import jaconv
 
 app = Flask(__name__)
 app.secret_key = 'test'
@@ -180,10 +181,20 @@ def assessment(filename):
         path = os.path.join(app.config['UPLOAD_FOLDER'],filename)
         with open(path, "rb") as f:
             encoded = base64.b64encode(f.read()).decode('utf-8')
-        output = price(filename.rsplit('.', 1)[1], encoded)
-        return jsonify(json.loads(output))
+        output = json.loads(price(filename.rsplit('.', 1)[1], encoded))
+        vegetable_name_h = jaconv.hira2kata(output['vegetable'])
+        vegetable_name_k = jaconv.kata2hira(output['vegetable'])
+        vegetable_h = Vegetable.query.filter_by(name=vegetable_name_h).first()
+        vegetable_k = Vegetable.query.filter_by(name=vegetable_name_k).first()
+        #print(vegetable_name_k,vegetable_name_h)
+        if vegetable_h:
+            print(vegetable_h.base_price)
+        elif vegetable_k:
+            print(vegetable_k.base_price)
+        return jsonify(output)
     else: 
         return (f'{filename} is Not exist')
+
 
 
 @app.route('/mypage', methods=['GET','POST'])
@@ -228,11 +239,6 @@ def setprice():
 
 @app.route('/update_price', methods=['POST'])
 def update_price():
-    delete_id = request.form.get('delete_id')
-    if delete_id is not None:
-        vegetable = Vegetable.query.get(delete_id)
-        db.session.delete(vegetable)
-        db.session.commit()
     for key,value in request.form.items():
         if key.startswith('price_') and value != '':
             vege_id = key.split('_')[1]
@@ -250,8 +256,15 @@ def update_price():
             vegetable.update_at = datetime.now()
             db.session.merge(vegetable)
             db.session.commit()
-
     return redirect(url_for('setprice'))
+
+@app.route('/delete_price/<int:id>', methods=['POST'])
+def delete_price(id):
+    vegetable = Vegetable.query.get(id)
+    if vegetable:
+        db.session.delete(vegetable)
+        db.session.commit()
+    return ''
 
 @app.route('/users')
 def users():

@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>価格設定</title>
 </head>
+<script>
+    function deleteVegetable(id) {
+        if (!confirm('本当に削除しますか？')) return;
+        fetch('/delete_price/' + id,
+            { method: 'POST' }
+        ).then(() => location.reload()); 
+    }
+</script>
 <body>
     <form action="/update_price" method="post">
         <table border="1">
@@ -22,12 +30,12 @@
                 <td>{{ vegetable.name }}</td>
                 <td>{{ vegetable.base_price }}円</td>
                 <td>
-                    <input type="number" name="price_{{ vegetable.id }}" step="0.1"> 円/
-                    <input type="number" name="weight_{{ vegetable.id }}" step="0.1"> kgあたり
+                    <input type="number" name="price_{{ vegetable.id }}" step="0.1" min="0"> 円/
+                    <input type="number" name="weight_{{ vegetable.id }}" step="0.1" min="0.1"> kgあたり
                 </td>
                 <td>{{ vegetable.updated_at }}</td>
                 <td>
-                    <button type="submit" name="delete_id" value="{{ vegetable.id }}">削除</button>
+                    <button type="button" onclick="deleteVegetable({{ vegetable.id }})">削除</button>
                 </td>
             </tr>
             {% endfor %}
@@ -39,8 +47,8 @@
 
     <form action="/setprice" method="post">
         <input type="text" name="newvege" placeholder="新しい野菜名">
-        <input type="number" name="newvege_price" step="0.1"> 円/
-        <input type="number" name="newvege_weight" step="0.1"> kgあたり
+        <input type="number" name="newvege_price" step="0.1" min="0"> 円/
+        <input type="number" name="newvege_weight" step="0.1" min="0.1"> kgあたり
         <input type="submit" value="追加">
     </form>
 </body>
