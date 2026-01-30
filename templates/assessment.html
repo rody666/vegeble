@@ -11,6 +11,7 @@
             const condition_p = document.getElementById('condition');
             const vegetable_p = document.getElementById('vegetable');
             const reason_p = document.getElementById('reason');
+            const price_p = document.getElementById('price');
 
             const onChangeInputFile = async (e) => {
                 const file = e.target.files[0];
@@ -36,6 +37,7 @@
                         vegetable_p.textContent = `種類: ${result2.vegetable}`;
                         condition_p.textContent = `状態: ${result2.condition}`;
                         reason_p.textContent = `理由: ${result2.reason}`;
+                        price_p.textContent = `値段: ${result2.price}`;
                     } catch (error) {
                         console.log('アップロードに失敗しました。', error);
                     }
@@ -57,6 +59,7 @@
     <p id="vegetable"></p>
     <p id="condition"></p>
     <p id="reason"></p>
+    <p id="price"></p>
     <input type="file" name="vege_image" accept="image/*" onchange="onChangeInputFile(event)">
 
     <div class="footer">

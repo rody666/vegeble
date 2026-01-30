@@ -188,9 +188,10 @@ def assessment(filename):
         vegetable_k = Vegetable.query.filter_by(name=vegetable_name_k).first()
         #print(vegetable_name_k,vegetable_name_h)
         if vegetable_h:
-            print(vegetable_h.base_price)
+            output['price'] = vegetable_h.base_price
         elif vegetable_k:
-            print(vegetable_k.base_price)
+            output['price'] = vegetable_k.base_price
+        print(output)
         return jsonify(output)
     else: 
         return (f'{filename} is Not exist')
@@ -253,7 +254,7 @@ def update_price():
             price_per_gram = price / weight
             vegetable = Vegetable.query.get(vege_id)
             vegetable.base_price = price_per_gram
-            vegetable.update_at = datetime.now()
+            vegetable.updated_at = datetime.now()
             db.session.merge(vegetable)
             db.session.commit()
     return redirect(url_for('setprice'))
